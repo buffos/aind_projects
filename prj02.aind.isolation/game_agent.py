@@ -3,7 +3,51 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
-import heuristics
+
+
+# region heuristics
+def mobility(game, player):
+    """
+
+    :param isolation.Board game: 
+    :param IsolationPlayer player: 
+    :return: float
+    """
+    own_moves = len(game.get_legal_moves(player))
+    opponent_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opponent_moves)
+
+
+def mobility_scaled(game, player):
+    """
+
+    :param isolation.Board game: 
+    :param IsolationPlayer player: 
+    :return: float
+    """
+    own_moves = len(game.get_legal_moves(player))
+    opponent_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    available_empty_squares = len(game.get_blank_spaces())
+    board_size = game.height * game.width
+    scaling_factor = board_size / available_empty_squares
+    # the less the empty squares the more important the available moves
+    return float(own_moves - opponent_moves) * scaling_factor
+
+
+def common_moves(game, player):
+    """
+
+    :param isolation.Board game: 
+    :param IsolationPlayer player: 
+    :return: float
+    """
+    own_moves = game.get_legal_moves(player)
+    opponent_moves = game.get_legal_moves(game.get_opponent(player))
+    same_moves = list(set(own_moves) & set(opponent_moves))
+    return float(len(same_moves))
+
+
+# endregion
 
 
 class SearchTimeout(Exception):
@@ -42,7 +86,75 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return heuristics.mobility(game, player)
+    return mobility_scaled(game, player)
+
+
+def custom_score_2(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+    of the given player.
+
+    This should be the best heuristic function for your project submission.
+
+    Note: this function should be called from within a Player instance as
+    `self.score()` -- you should not need to call this function directly.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : IsolationPlayer
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
+
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return mobility(game, player)
+
+
+def custom_score_3(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+    of the given player.
+
+    This should be the best heuristic function for your project submission.
+
+    Note: this function should be called from within a Player instance as
+    `self.score()` -- you should not need to call this function directly.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : IsolationPlayer
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
+
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return common_moves(game, player)
 
 
 class IsolationPlayer:
@@ -67,6 +179,7 @@ class IsolationPlayer:
         positive value large enough to allow the function to return before the
         timer expires.
     """
+
     def __init__(self, search_depth=3, score_fn=custom_score, timeout=10.):
         self.search_depth = search_depth
         self.score = score_fn
@@ -113,7 +226,11 @@ class MinimaxPlayer(IsolationPlayer):
 
         # Initialize the best move so that this function returns something
         # in case the search fails due to timeout
-        best_move = self.resignation_move
+        legal_moves = game.get_legal_moves()
+        if len(legal_moves) == 0:
+            return self.resignation_move
+        else:
+            best_move = legal_moves[random.randint(0, len(legal_moves) - 1)]
 
         try:
             # The try/except block will automatically catch the exception
@@ -126,7 +243,7 @@ class MinimaxPlayer(IsolationPlayer):
         # Return the best move from the last completed search iteration
         return best_move
 
-    def minimax(self, game, depth, maximizing_mode=True):
+    def minimax(self, game, depth):
         """Implement depth-limited minimax search algorithm as described in
         the lectures.
 
@@ -147,9 +264,6 @@ class MinimaxPlayer(IsolationPlayer):
         depth : int
             Depth is an integer representing the maximum number of plies to
             search in the game tree before aborting
-            
-        maximizing_mode: bool
-            if True it will maximize on the score of its children else it will minimize
 
         Returns
         -------
@@ -168,19 +282,25 @@ class MinimaxPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        _, best_move = self.do_minimax(game, depth)
+        return best_move
+
+    def do_minimax(self, game, depth, maximizing_mode=True):
         best_move = self.resignation_move
         best_score = float('-inf') if maximizing_mode else float('inf')
         min_or_max = max if maximizing_mode else min
+        legal_moves = game.get_legal_moves()
 
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # at leaf nodes we are just interested in the evaluation of the position
+        # at leaf nodes (or terminal nodes) we are just interested in the evaluation of the position
         # we are not predicting best line. Lowest recursion point
-        if depth == 0: return self.score(game, self), best_move
+        if depth == 0 or len(legal_moves) == 0:  # end of search or terminal_node
+            return self.score(game, self), best_move
 
-        for move in game.get_legal_moves(): # active players legal moves
-            score, _ = self.minimax(game.forecast_move(move), depth - 1, not maximizing_mode)
+        for move in legal_moves:  # active players legal moves
+            score, _ = self.do_minimax(game.forecast_move(move), depth - 1, not maximizing_mode)
             best_score, best_move = min_or_max((best_score, best_move), (score, move))  # standard tuple comparison
 
         return best_score, best_move
@@ -224,8 +344,21 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize the best move so that this function returns something
+        # in case the search fails due to timeout
+        best_move = self.resignation_move
+        search_depth = 1
+
+        try:
+            # The try/except block will automatically catch the exception
+            # raised when the timer is about to expire.
+            while True:
+                best_move = self.alphabeta(game, search_depth)
+                search_depth += 1
+
+        except SearchTimeout:
+            # when timeout occurs we return the best move from the previous iteration step
+            return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -254,6 +387,7 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         beta : float
             Beta limits the upper bound of search on maximizing layers
+        
 
         Returns
         -------
@@ -272,8 +406,34 @@ class AlphaBetaPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        _, best_move = self.do_alpha_beta(game, depth, alpha, beta)
+        return best_move
+
+    def do_alpha_beta(self, game, depth, alpha=float("-inf"), beta=float("inf"), max_mode=True):
+        best_move = self.resignation_move
+        best_score = alpha if max_mode else beta
+        legal_moves = game.get_legal_moves()
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # at leaf nodes (or terminal nodes) we are just interested in the evaluation of the position
+        # we are not predicting best line. Lowest recursion point
+        if depth == 0 or len(legal_moves) == 0:  # end of search or terminal_node
+            return self.score(game, self), best_move
+
+        for move in legal_moves:
+            if max_mode:
+                score, _ = self.do_alpha_beta(game.forecast_move(move), depth - 1, best_score, beta, not max_mode)
+                if score > best_score:  # update best score (max)
+                    best_score, best_move = score, move
+                if best_score >= beta:  # the minimizer has already a better option
+                    return best_score, best_move
+            else:
+                score, _ = self.do_alpha_beta(game.forecast_move(move), depth - 1, alpha, best_score, not max_mode)
+                if score < best_score:  # update best score (min)
+                    best_score, best_move = score, move
+                if best_score <= alpha:  # the maximizer has already a better option
+                    return best_score, best_move
+
+        return best_score, best_move
