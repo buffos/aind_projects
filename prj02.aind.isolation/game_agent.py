@@ -72,6 +72,7 @@ class IsolationPlayer:
         self.score = score_fn
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
+        self.resignation_move = (-1, -1)
 
 
 class MinimaxPlayer(IsolationPlayer):
@@ -112,7 +113,7 @@ class MinimaxPlayer(IsolationPlayer):
 
         # Initialize the best move so that this function returns something
         # in case the search fails due to timeout
-        best_move = (-1, -1)
+        best_move = self.resignation_move
 
         try:
             # The try/except block will automatically catch the exception
@@ -125,7 +126,7 @@ class MinimaxPlayer(IsolationPlayer):
         # Return the best move from the last completed search iteration
         return best_move
 
-    def minimax(self, game, depth):
+    def minimax(self, game, depth, maximizing_mode=True):
         """Implement depth-limited minimax search algorithm as described in
         the lectures.
 
@@ -146,6 +147,9 @@ class MinimaxPlayer(IsolationPlayer):
         depth : int
             Depth is an integer representing the maximum number of plies to
             search in the game tree before aborting
+            
+        maximizing_mode: bool
+            if True it will maximize on the score of its children else it will minimize
 
         Returns
         -------
@@ -164,11 +168,22 @@ class MinimaxPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        best_move = self.resignation_move
+        best_score = float('-inf') if maximizing_mode else float('inf')
+        min_or_max = max if maximizing_mode else min
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # at leaf nodes we are just interested in the evaluation of the position
+        # we are not predicting best line. Lowest recursion point
+        if depth == 0: return self.score(game, self), best_move
+
+        for move in game.get_legal_moves(): # active players legal moves
+            score, _ = self.minimax(game.forecast_move(move), depth - 1, not maximizing_mode)
+            best_score, best_move = min_or_max((best_score, best_move), (score, move))  # standard tuple comparison
+
+        return best_score, best_move
 
 
 class AlphaBetaPlayer(IsolationPlayer):
