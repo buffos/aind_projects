@@ -6,6 +6,35 @@ import random
 
 
 # region heuristics
+def test(game, player):
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    return float(own_moves ** 2 / (1 + opp_moves)) + float(own_moves / (1 + opp_moves ** 2))
+
+
+def open_move_score(game, player):
+    """
+
+    :param isolation.Board game: 
+    :param IsolationPlayer player: 
+    :return: float
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return float(len(game.get_legal_moves(player)))
+
+
 def mobility(game, player):
     """
 
@@ -25,11 +54,13 @@ def mobility_scaled(game, player):
     :param IsolationPlayer player: 
     :return: float
     """
+    max_number_of_moves = 8
     own_moves = len(game.get_legal_moves(player))
     opponent_moves = len(game.get_legal_moves(game.get_opponent(player)))
     available_empty_squares = len(game.get_blank_spaces())
     board_size = game.height * game.width
-    scaling_factor = board_size / available_empty_squares
+    # scaling_factor = board_size / available_empty_squares
+    scaling_factor = max_number_of_moves / own_moves if own_moves > 0 else max_number_of_moves
     # the less the empty squares the more important the available moves
     return float(own_moves - opponent_moves) * scaling_factor
 
@@ -45,6 +76,48 @@ def common_moves(game, player):
     opponent_moves = game.get_legal_moves(game.get_opponent(player))
     same_moves = list(set(own_moves) & set(opponent_moves))
     return float(len(same_moves))
+
+
+def player_distance(game, player):
+    y1, x1 = game.get_player_location(player)
+    y2, x2 = game.get_player_location(game.get_opponent(player))
+    return float((y1 - y2) ** 2 + (x1 - x2) ** 2)
+
+
+def combined_1(game, player):
+    own_moves = game.get_legal_moves(player)
+    opponent_moves = game.get_legal_moves(game.get_opponent(player))
+    open_move_score = len(own_moves)
+    mobility = len(own_moves) - len(opponent_moves)
+    same_moves = len(list(set(own_moves) & set(opponent_moves)))
+
+    return float(0.2 * open_move_score + 0.4 * mobility + 0.4 * same_moves)
+
+
+def combined_2(game, player):
+    own_moves = game.get_legal_moves(player)
+    opponent_moves = game.get_legal_moves(game.get_opponent(player))
+    board_size = game.height * game.width
+    moves_to_board = game.move_count / board_size
+
+    if moves_to_board > 0.5:  # closer to endgame (most squares are occupied
+        return float(len(own_moves) * 2 - len(opponent_moves))
+    else:
+        return float(len(own_moves) - len(opponent_moves) * 2)
+
+
+def combined_3(game, player):
+    own_moves = game.get_legal_moves(player)
+    opponent_moves = game.get_legal_moves(game.get_opponent(player))
+    board_size = game.height * game.width
+    moves_to_board = game.move_count / board_size
+
+    if moves_to_board >= 0.8:  # closer to endgame (most squares are occupied
+        return float(len(own_moves) * 4 - len(opponent_moves))
+    elif 0.4 <= moves_to_board < 0.8:
+        return float(len(own_moves) * 2 - len(opponent_moves))
+    else:
+        return float(len(own_moves) - len(opponent_moves) * 2)
 
 
 # endregion
@@ -86,7 +159,7 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return mobility_scaled(game, player)
+    return combined_1(game, player)
 
 
 def custom_score_2(game, player):
@@ -120,7 +193,7 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return mobility(game, player)
+    return combined_2(game, player)
 
 
 def custom_score_3(game, player):
@@ -154,7 +227,7 @@ def custom_score_3(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return common_moves(game, player)
+    return combined_3(game, player)
 
 
 class IsolationPlayer:
@@ -238,10 +311,7 @@ class MinimaxPlayer(IsolationPlayer):
             return self.minimax(game, self.search_depth)
 
         except SearchTimeout:
-            pass  # Handle any actions required after timeout as needed
-
-        # Return the best move from the last completed search iteration
-        return best_move
+            return best_move  # Handle any actions required after timeout as needed
 
     def minimax(self, game, depth):
         """Implement depth-limited minimax search algorithm as described in
@@ -343,9 +413,6 @@ class AlphaBetaPlayer(IsolationPlayer):
             (-1, -1) if there are no available legal moves.
         """
         self.time_left = time_left
-
-        # Initialize the best move so that this function returns something
-        # in case the search fails due to timeout
         best_move = self.resignation_move
         search_depth = 1
 
@@ -410,9 +477,13 @@ class AlphaBetaPlayer(IsolationPlayer):
         return best_move
 
     def do_alpha_beta(self, game, depth, alpha=float("-inf"), beta=float("inf"), max_mode=True):
-        best_move = self.resignation_move
         best_score = alpha if max_mode else beta
         legal_moves = game.get_legal_moves()
+
+        if len(legal_moves)==0:
+            best_move = self.resignation_move
+        else:
+            best_move = legal_moves[random.randint(0, len(legal_moves) - 1)]
 
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
