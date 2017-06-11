@@ -44,28 +44,31 @@ The key parts of the paper are
 - to avoid that, we use a generalized notion of the min and max functions, borrowed from L<sup>p</sup> spaces
 - we define a generalized mean for every p as follows : 
 
-
-    ![generalized mean](https://latex.codecogs.com/png.latex?\bg_white&space;M^p_a&space;=&space;\bigg(\frac{1}{n}&space;*&space;\sum&space;a_i^p\bigg)^{1/p})
+    <img src="https://latex.codecogs.com/png.latex?\bg_white&space;M^p_a&space;=&space;\bigg(\frac{1}{n}&space;*&space;\sum&space;a_i^p\bigg)^{1/p}"  title="generalized mean" />
 
 - if we let p go to +inf then what we get is the maximum function
 - if we let p go to -inf then what we get is the minimum function
 - the benefit of this formulation is that we can now have continuous approximations of the min an max functions and this calculate derivatives
 - the partial derivate of the new function M on one of its components is:
 
-    ![derivative](https://latex.codecogs.com/png.latex?\bg_white&space;\frac{\partial&space;M^p_a}{\partial&space;a_i}&space;=&space;\frac{1}{n}&space;\bigg(\frac&space;{a_i}{M^p_a}\bigg)^{p-1})
+    <img src="https://latex.codecogs.com/png.latex?\bg_white&space;\frac{\partial&space;M^p_a}{\partial&space;a_i}&space;=&space;\frac{1}{n}&space;\bigg(\frac&space;{a_i}{M^p_a}\bigg)^{p-1}" title="partial derivatives"/>
 
 - if we take the derivative of the max function computed on a 'father' node (denoted as f(c)) against one of its children we have
 
-    [spell-off]: # (cSpell:disable)
+    [spell-off]: <> (cSpell:disable)
+
     <img src="https://latex.codecogs.com/png.latex?\bg_white&space;\frac{\partial&space;M^p(f(c))}{\partial&space;c}&space;=&space;\frac{1}{n}&space;\bigg(\frac&space;{eval(c)}{M^p(f(c)))}\bigg)^{p-1}&space;=&space;\frac{1}{n}&space;\bigg(\frac&space;{eval(c)}{eval(d)}\bigg)^{p-1}" title="\frac{\partial M^p(f(c))}{\partial c} = \frac{1}{n} \bigg(\frac {eval(c)}{M^p(f(c)))}\bigg)^{p-1} = \frac{1}{n} \bigg(\frac {eval(c)}{eval(d)}\bigg)^{p-1}" />
-    [spell-on]: # (cSpell:enable)
+
+    [spell-on]: <> (cSpell:enable)
 
     where d is the sibling of c with the best evaluation
 
 - if we take logs we have
 
     [spell-off]: # (cSpell:disable)
+
     - <img src="https://latex.codecogs.com/png.latex?\bg_white&space;-&space;[log(1/n)&space;&plus;&space;(p-1)*log(eval(c))&space;-&space;log(eval(d))]" title="- [log(1/n) + (p-1)*log(eval(c)) - log(eval(d))]" />
+    
     [spell-on]: # (cSpell:enable)
 
     - this last expression quantizes how much a change in node c will affect the parent f(c)
