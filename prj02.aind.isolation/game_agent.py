@@ -4,9 +4,12 @@ and include the results in your report.
 """
 import random
 
+MAX_SCORE = float('inf')
+MIN_SCORE = float('-inf')
+
 
 # region heuristics
-def test(game, player):
+def combined_4(game, player):
     if game.is_loser(player):
         return float("-inf")
 
@@ -26,12 +29,6 @@ def open_move_score(game, player):
     :param IsolationPlayer player: 
     :return: float
     """
-    if game.is_loser(player):
-        return float("-inf")
-
-    if game.is_winner(player):
-        return float("inf")
-
     return float(len(game.get_legal_moves(player)))
 
 
@@ -82,6 +79,12 @@ def player_distance(game, player):
     y1, x1 = game.get_player_location(player)
     y2, x2 = game.get_player_location(game.get_opponent(player))
     return float((y1 - y2) ** 2 + (x1 - x2) ** 2)
+
+
+def player_distance_inverse(game, player):
+    y1, x1 = game.get_player_location(player)
+    y2, x2 = game.get_player_location(game.get_opponent(player))
+    return float(1/((y1 - y2) ** 2 + (x1 - x2) ** 2))
 
 
 def combined_1(game, player):
@@ -154,12 +157,13 @@ def custom_score(game, player):
     """
 
     if game.is_loser(player):
-        return float("-inf")
+        return MIN_SCORE
 
     if game.is_winner(player):
-        return float("inf")
+        return MAX_SCORE
 
-    return combined_1(game, player)
+    # return combined_1(game, player)
+    return combined_4(game, player)
 
 
 def custom_score_2(game, player):
@@ -188,12 +192,12 @@ def custom_score_2(game, player):
     """
 
     if game.is_loser(player):
-        return float("-inf")
+        return MIN_SCORE
 
     if game.is_winner(player):
-        return float("inf")
+        return MAX_SCORE
 
-    return combined_2(game, player)
+    return common_moves(game, player)
 
 
 def custom_score_3(game, player):
@@ -222,12 +226,46 @@ def custom_score_3(game, player):
     """
 
     if game.is_loser(player):
-        return float("-inf")
+        return MIN_SCORE
 
     if game.is_winner(player):
-        return float("inf")
+        return MAX_SCORE
 
-    return combined_3(game, player)
+    return player_distance(game, player)
+
+
+def custom_score_4(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+    of the given player.
+
+    This should be the best heuristic function for your project submission.
+
+    Note: this function should be called from within a Player instance as
+    `self.score()` -- you should not need to call this function directly.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : IsolationPlayer
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
+
+    if game.is_loser(player):
+        return MIN_SCORE
+
+    if game.is_winner(player):
+        return MAX_SCORE
+
+    return combined_1(game, player)
 
 
 class IsolationPlayer:
@@ -263,7 +301,7 @@ class IsolationPlayer:
 
 class MinimaxPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using depth-limited minimax
-    search. You must finish and test this player to make sure it properly uses
+    search. You must finish and combined_4 this player to make sure it properly uses
     minimax to return a good move before the search time limit expires.
     """
 
@@ -300,7 +338,7 @@ class MinimaxPlayer(IsolationPlayer):
         # Initialize the best move so that this function returns something
         # in case the search fails due to timeout
         legal_moves = game.get_legal_moves()
-        if len(legal_moves) == 0:
+        if not legal_moves:
             return self.resignation_move
         else:
             best_move = legal_moves[random.randint(0, len(legal_moves) - 1)]
@@ -378,7 +416,7 @@ class MinimaxPlayer(IsolationPlayer):
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
-    search with alpha-beta pruning. You must finish and test this player to
+    search with alpha-beta pruning. You must finish and combined_4 this player to
     make sure it returns a good move before the search time limit expires.
     """
 
@@ -480,7 +518,7 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_score = alpha if max_mode else beta
         legal_moves = game.get_legal_moves()
 
-        if len(legal_moves)==0:
+        if len(legal_moves) == 0:
             best_move = self.resignation_move
         else:
             best_move = legal_moves[random.randint(0, len(legal_moves) - 1)]

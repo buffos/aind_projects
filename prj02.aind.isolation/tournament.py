@@ -21,9 +21,9 @@ from isolation import Board
 from sample_players import (RandomPlayer, open_move_score,
                             improved_score, center_score)
 from game_agent import (MinimaxPlayer, AlphaBetaPlayer, custom_score,
-                        custom_score_2, custom_score_3)
+                        custom_score_2, custom_score_3, custom_score_4)
 
-NUM_MATCHES = 200  # number of matches against each opponent
+NUM_MATCHES = 500  # number of matches against each opponent
 TIME_LIMIT = 150  # number of milliseconds before timeout
 
 DESCRIPTION = """
@@ -38,7 +38,7 @@ Agent = namedtuple("Agent", ["player", "name"])
 
 
 def play_round(cpu_agent, test_agents, win_counts, num_matches):
-    """Compare the test agents to the cpu agent in "fair" matches.
+    """Compare the combined_4 agents to the cpu agent in "fair" matches.
 
     "Fair" matches use random starting locations and force the agents to
     play as both first and second player to control for advantages resulting
@@ -78,7 +78,7 @@ def update(total_wins, wins):
 
 
 def play_matches(cpu_agents, test_agents, num_matches):
-    """Play matches between the test agent and each cpu_agent individually. """
+    """Play matches between the combined_4 agent and each cpu_agent individually. """
     total_wins = {agent.player: 0 for agent in test_agents}
     total_timeouts = 0.
     total_forfeits = 0.
@@ -135,16 +135,17 @@ def main():
         Agent(AlphaBetaPlayer(score_fn=custom_score), "AB_Custom"),
         Agent(AlphaBetaPlayer(score_fn=custom_score_2), "AB_Custom_2"),
         Agent(AlphaBetaPlayer(score_fn=custom_score_3), "AB_Custom_3")
+        # Agent(AlphaBetaPlayer(score_fn=custom_score_4), "AB_Custom_4")
     ]
 
-    # Define a collection of agents to compete against the test agents
+    # Define a collection of agents to compete against the combined_4 agents
     cpu_agents = [
-        Agent(RandomPlayer(), "Random"),
-        Agent(MinimaxPlayer(score_fn=open_move_score), "MM_Open"),
-        Agent(MinimaxPlayer(score_fn=center_score), "MM_Center"),
-        Agent(MinimaxPlayer(score_fn=improved_score), "MM_Improved"),
-        Agent(AlphaBetaPlayer(score_fn=open_move_score), "AB_Open"),
-        Agent(AlphaBetaPlayer(score_fn=center_score), "AB_Center"),
+        # Agent(RandomPlayer(), "Random"),
+        # Agent(MinimaxPlayer(score_fn=open_move_score), "MM_Open"),
+        # Agent(MinimaxPlayer(score_fn=center_score), "MM_Center"),
+        # Agent(MinimaxPlayer(score_fn=improved_score), "MM_Improved"),
+        # Agent(AlphaBetaPlayer(score_fn=open_move_score), "AB_Open"),
+        # Agent(AlphaBetaPlayer(score_fn=center_score), "AB_Center"),
         Agent(AlphaBetaPlayer(score_fn=improved_score), "AB_Improved")
     ]
 
