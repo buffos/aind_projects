@@ -148,8 +148,8 @@ and (number of legal moves) - (number of opponent legal move)^2 when the board i
         score = float(own_moves ** 2 / (1 + opp_moves)) + float(own_moves / (1 + opp_moves ** 2))
 
     - **Performance**: fast and simple
-    - **ELO Difference**:
-    - **Likelihood of Superiority**:
+    - **ELO Difference**: 10.42
+    - **Likelihood of Superiority**: 82.86 %
 
 </BR></BR>
 
@@ -161,4 +161,6 @@ and (number of legal moves) - (number of opponent legal move)^2 when the board i
 
 The results are summarized in the following graph
 
-Based on the above analysis, the heuristic of choice (based on those shallow depth matches) is because its the only one showing statistically significant evidence of superiority against the reference heuristic 
+![chart](./img/chart.png)
+
+Based on the above analysis, the heuristic of choice (based on those shallow depth matches) is combined_4 because its **10 ELO points better** than the base heuristic and **computationally as expensive** as the base (involves the same calls to finding the legal moves of both sides) and **as easy to implement**

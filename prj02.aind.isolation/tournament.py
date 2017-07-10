@@ -140,12 +140,12 @@ def main():
 
     # Define a collection of agents to compete against the combined_4 agents
     cpu_agents = [
-        # Agent(RandomPlayer(), "Random"),
-        # Agent(MinimaxPlayer(score_fn=open_move_score), "MM_Open"),
-        # Agent(MinimaxPlayer(score_fn=center_score), "MM_Center"),
-        # Agent(MinimaxPlayer(score_fn=improved_score), "MM_Improved"),
-        # Agent(AlphaBetaPlayer(score_fn=open_move_score), "AB_Open"),
-        # Agent(AlphaBetaPlayer(score_fn=center_score), "AB_Center"),
+        Agent(RandomPlayer(), "Random"),
+        Agent(MinimaxPlayer(score_fn=open_move_score), "MM_Open"),
+        Agent(MinimaxPlayer(score_fn=center_score), "MM_Center"),
+        Agent(MinimaxPlayer(score_fn=improved_score), "MM_Improved"),
+        Agent(AlphaBetaPlayer(score_fn=open_move_score), "AB_Open"),
+        Agent(AlphaBetaPlayer(score_fn=center_score), "AB_Center"),
         Agent(AlphaBetaPlayer(score_fn=improved_score), "AB_Improved")
     ]
 
