@@ -12,7 +12,7 @@ Be careful: some functions take an Expr as argument, and some take a KB.
 Logical expressions can be created with Expr or expr, imported from utils, TODO
 or with expr, which adds the capability to write a string that uses
 the connectives ==>, <==, <=>, or <=/=>. But be careful: these have the
-opertor precedence of commas; you may need to add parens to make precendence work.
+operator precedence of commas; you may need to add parents to make precedence work.
 See logic.ipynb for examples.
 
 Then we implement various functions for doing logical inference:
@@ -56,7 +56,7 @@ class KB:
         raise NotImplementedError
 
     def tell(self, sentence):
-        "Add the sentence to the KB."
+        """Add the sentence to the KB."""
         raise NotImplementedError
 
     def ask(self, query):
@@ -64,11 +64,11 @@ class KB:
         return first(self.ask_generator(query), default=False)
 
     def ask_generator(self, query):
-        "Yield all the substitutions that make query true."
+        """Yield all the substitutions that make query true."""
         raise NotImplementedError
 
     def retract(self, sentence):
-        "Remove sentence from the KB."
+        """Remove sentence from the KB."""
         raise NotImplementedError
 
 
@@ -81,7 +81,7 @@ class PropKB(KB):
             self.tell(sentence)
 
     def tell(self, sentence):
-        "Add the sentence's clauses to the KB."
+        """Add the sentence's clauses to the KB."""
         self.clauses.extend(conjuncts(to_cnf(sentence)))
 
     def ask_generator(self, query):
