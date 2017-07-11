@@ -1,6 +1,7 @@
 from aimacode.utils import expr, Expr
-from lp_utils import FluentState, encode_state, decode_state , conjunctive_sentence
+from lp_utils import FluentState, encode_state, decode_state
 from aimacode.logic import PropKB
+from my_air_cargo_problems import AirCargoProblem
 
 ex1 = expr('At(C1, SFO)')  # type: Expr
 print("ex1 is of type: ", type(ex1))
@@ -41,19 +42,33 @@ print(init.pos_sentence())
 # that omits the negation predicates
 
 # initial state of the AirCargoProblem would be
-state_map = init.pos + init.neg # all predicates
-initial_state_TF = encode_state(init, state_map) # their mapped state (True or False)
-print("The initial state of the Air Cargo Problem would be",state_map)
+state_map = init.pos + init.neg  # all predicates
+initial_state_TF = encode_state(init, state_map)  # their mapped state (True or False)
+print("The initial state of the Air Cargo Problem would be", state_map)
 print("The initial_TF state of the Air Cargo Problem would be", initial_state_TF)
 # decoding a state requires giving first the truth state of the predicates and then the predicates
 # it returns a FluentObject and can extract a sentence with the sentence member function
 
 # it creates a propositional logic statement
 # based on the truth or false of the predicate
-print(decode_state('FT', ['At(C1, SFO)','At(C2, SFO)']).sentence())
-
+print(decode_state('FT', ['At(C1, SFO)', 'At(C2, SFO)']).sentence())
 
 kb = PropKB()
 # this simply extracts the sentence to atomic clauses
-kb.tell(decode_state('FT', ['At(C1, SFO)','At(C2, SFO)']).sentence())
+kb.tell(decode_state('FT', ['At(C1, SFO)', 'At(C2, SFO)']).sentence())
 print(kb.clauses)
+
+# Now explore the AirCargoProblem
+ac = AirCargoProblem(cargos, planes, airports, init, goal)
+
+from aimacode.planning import Action
+action = ac.actions_list[1] # type: Action
+print('The action has an operator <{}> , arguments {}'.format(action.name, action.args))
+print('has positive {} and negative {} preconditions'.format(action.precond_pos, action.precond_neg))
+print('also has additive {} and removing {} effects'.format(action.effect_add, action.effect_rem))
+
+kb = PropKB()
+kb.tell(decode_state(initial_state_TF, pos+neg).sentence())
+print("kb before action: ", kb.clauses)
+action(kb, action.args)
+print("kb after action: ", kb.clauses)
