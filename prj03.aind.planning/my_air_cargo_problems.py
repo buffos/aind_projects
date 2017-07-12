@@ -140,7 +140,7 @@ class AirCargoProblem(Problem):
             e.g. 'FTTTFF'
         :return: list of Action objects
         """
-        kb = self.load_knowledgeBase(state) # load the truthfulness of each of the predicates
+        kb = self.load_knowledgeBase(state)  # load the truthfulness of each of the predicates
         possible_actions = []
         for action in self.actions_list:
             if action.check_precond(kb, action.args):
@@ -197,8 +197,18 @@ class AirCargoProblem(Problem):
         conditions by ignoring the preconditions required for an action to be
         executed.
         """
-        # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
+        kb = self.load_knowledgeBase(node.state, onlyPositive=True)
+        goals = set(self.goal) - set(kb.clauses)
         count = 0
+        while goals:
+            for action in self.actions_list:
+                env = clone_kb(kb)
+                action.act_relaxed(env, action.args)
+                goals_left = goals - set(env.clauses)
+                if len(goals_left) < len(goals): # we are moving to the write direction
+                    count +=1
+                    goals = goals_left
+                    kb = env
         return count
 
 
@@ -307,3 +317,14 @@ def air_cargo_p3() -> AirCargoProblem:
         expr('At(C4, SFO)'),
     ]
     return AirCargoProblem(cargos, planes, airports, init, goal)
+
+
+def clone_kb(kb: PropKB) -> PropKB:
+    """
+    Instead of rebuilding a knowledge base we just clone the clauses
+    :param kb: 
+    :return: 
+    """
+    clone = PropKB()
+    clone.clauses = kb.clauses.copy()
+    return clone
