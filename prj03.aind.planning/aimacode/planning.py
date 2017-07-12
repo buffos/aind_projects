@@ -64,3 +64,13 @@ class Action:
         # add positive literals
         for clause in self.effect_add:
             kb.tell(self.substitute(clause, args))
+
+    def act_relaxed(self, kb, args):
+        """Executes the action on the state's kb"""
+        # DO NOT check if the preconditions are satisfied
+        # remove negative literals
+        for clause in self.effect_rem:
+            kb.retract(self.substitute(clause, args))
+        # add positive literals
+        for clause in self.effect_add:
+            kb.tell(self.substitute(clause, args))
