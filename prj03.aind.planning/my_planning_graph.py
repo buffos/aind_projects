@@ -4,7 +4,7 @@ from aimacode.utils import expr
 from lp_utils import decode_state
 
 
-class PgNode():
+class PgNode:
     """Base class for planning graph nodes.
 
     includes instance sets common to both types of nodes used in a planning graph
@@ -105,7 +105,6 @@ class PgNode_s(PgNode):
 class PgNode_a(PgNode):
     """A-type (action) Planning Graph node - inherited from PgNode """
 
-
     def __init__(self, action: Action):
         """A-level Planning Graph node constructor
 
@@ -197,7 +196,7 @@ def mutexify(node1: PgNode, node2: PgNode):
     node2.mutex.add(node1)
 
 
-class PlanningGraph():
+class PlanningGraph:
     """
     A planning graph as described in chapter 10 of the AIMA text. The planning
     graph can be used to reason about 
@@ -268,7 +267,8 @@ class PlanningGraph():
         # the graph should only be built during class construction
         if (len(self.s_levels) != 0) or (len(self.a_levels) != 0):
             raise Exception(
-                'Planning Graph already created; construct a new planning graph for each new state in the planning sequence')
+                'Planning Graph already created; '
+                'construct a new planning graph for each new state in the planning sequence')
 
         # initialize S0 to literals in initial state provided.
         leveled = False
