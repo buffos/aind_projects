@@ -275,23 +275,23 @@ class PlanningGraph:
         level = 0
         self.s_levels.append(set())  # S0 set of s_nodes - empty to start
         # for each fluent in the initial state, add the correct literal PgNode_s
-        for literal in self.fs.pos:
-            self.s_levels[level].add(PgNode_s(literal, True))
-        for literal in self.fs.neg:
-            self.s_levels[level].add(PgNode_s(literal, False))
+        for literal in self.fs.pos: # for every positive fluent
+            self.s_levels[level].add(PgNode_s(literal, True))  # create a positive s_node
+        for literal in self.fs.neg: # for every negative fluent
+            self.s_levels[level].add(PgNode_s(literal, False)) # create a negative s_node
         # no mutexes at the first level
 
         # continue to build the graph alternating A, S levels until last two S levels contain the same literals,
         # i.e. until it is "leveled"
         while not leveled:
-            self.add_action_level(level)
-            self.update_a_mutex(self.a_levels[level])
+            self.add_action_level(level)  # create actions for current level
+            self.update_a_mutex(self.a_levels[level])  # update mutex actions for current level
 
-            level += 1
-            self.add_literal_level(level)
-            self.update_s_mutex(self.s_levels[level])
+            level += 1  # increase the number of levels (level == state number)
+            self.add_literal_level(level)  # create the new states level
+            self.update_s_mutex(self.s_levels[level])  # find mutex in states
 
-            if self.s_levels[level] == self.s_levels[level - 1]:
+            if self.s_levels[level] == self.s_levels[level - 1]:  # check if there is no more progress
                 leveled = True
 
     def add_action_level(self, level):
@@ -303,13 +303,28 @@ class PlanningGraph:
         :return:
             adds A nodes to the current level in self.a_levels[level]
         """
-        # TODO add action A level to the planning graph as described in the Russell-Norvig text
         # 1. determine what actions to add and create those PgNode_a objects
         # 2. connect the nodes to the previous S literal level
-        # for example, the A0 level will iterate through all possible actions for the problem and add a PgNode_a to a_levels[0]
+        # for example,
+        #   the A0 level will iterate through all possible actions for the problem and add a PgNode_a to a_levels[0]
         #   set iff all prerequisite literals for the action hold in S0.  This can be accomplished by testing
-        #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
+        #   to see if a proposed PgNode_a has pre_nodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
+        assert len(self.a_levels) == level , "The action list already contains level"
+        action_nodes = set()  # create the set of action for the current level in order to populate it.
+        for action in self.all_actions:
+            # create a Node for the action
+            a_node = PgNode_a(action)
+            # the node must be reachable in the current level
+            s_level_preconditions = self.s_levels[level]
+            if a_node.prenodes < s_level_preconditions:  # subset => reachable
+                action_nodes.add(a_node) # add the node to the set of actions in this level
+                # now we create links in the graph between actions and predicates
+                for precondition_node in s_level_preconditions & a_node.prenodes:  # intersection
+                    precondition_node.chilren.add(a_node)  # connect preconditions with actions
+                    a_node.parents.add(precondition_node)  # connect actions with preconditions
+        self.a_levels.append(action_nodes)
+
 
     def add_literal_level(self, level):
         """ add an S (literal) level to the Planning Graph
