@@ -198,18 +198,8 @@ class AirCargoProblem(Problem):
         executed.
         """
         kb = self.load_knowledgeBase(node.state, onlyPositive=True)
-        goals = set(self.goal) - set(kb.clauses)
-        count = 0
-        while goals:
-            for action in self.actions_list:
-                env = clone_kb(kb)
-                action.act_relaxed(env, action.args)
-                goals_left = goals - set(env.clauses)
-                if len(goals_left) < len(goals): # we are moving to the write direction
-                    count +=1
-                    goals = goals_left
-                    kb = env
-        return count
+        unmet_goals = set(self.goal) - set(kb.clauses)
+        return len(unmet_goals)
 
 
 def air_cargo_p1() -> AirCargoProblem:
