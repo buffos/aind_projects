@@ -2,7 +2,7 @@ from aimacode.planning import Action
 from aimacode.search import Problem
 from aimacode.utils import expr
 from lp_utils import decode_state
-from typing import List
+from typing import List, Set
 
 
 class PgNode:
@@ -215,11 +215,12 @@ class PlanningGraph:
             s_levels: list of sets of PgNode_s, where each set in the list represents an S-level in the planning graph
             a_levels: list of sets of PgNode_a, where each set in the list represents an A-level in the planning graph
         """
+        self.problem = problem
         self.fs = decode_state(state, problem.state_map)
         self.serial = serial_planning
         self.all_actions = self.problem.actions_list + self.noop_actions(self.problem.state_map)
-        self.s_levels = []
-        self.a_levels = []
+        self.s_levels: List[Set(PgNode_s)] = []
+        self.a_levels: List[Set(PgNode_a)] = []
         self.create_graph()
 
     def noop_actions(self, literal_list):
@@ -324,7 +325,7 @@ class PlanningGraph:
                 action_nodes.add(a_node)  # add the node to the set of actions in this level
                 # now we create links in the graph between actions and predicates
                 for precondition_node in s_level_preconditions & a_node.prenodes:  # intersection
-                    precondition_node.chilren.add(a_node)  # connect preconditions with actions
+                    precondition_node.children.add(a_node)  # connect preconditions with actions
                     a_node.parents.add(precondition_node)  # connect actions with preconditions
         self.a_levels.append(action_nodes)
 
@@ -351,7 +352,7 @@ class PlanningGraph:
             for s_node in a_node.effnodes:
                 s_nodes.add(s_node)  # add the predicate in the new state
                 s_node.parents.add(a_node)  # link it to the action that created it
-                a_node.childre.add(s_node)  # link the action to the resulting predicate
+                a_node.children.add(s_node)  # link the action to the resulting predicate
         self.s_levels.append(s_nodes)
 
     def update_a_mutex(self, nodeset):
@@ -541,11 +542,11 @@ class PlanningGraph:
         """
         level_sum = 0
         # for each goal in the problem, determine the level cost, then add them together
-        goals = {PgNode_s(goal, True) for goal in self.problem.goals} # create a set of goals as literals
+        goals = {PgNode_s(goal, True) for goal in self.problem.goal}  # create a set of goals as literals
         while goals:
             for level, literals in enumerate(self.s_levels):
-                goals_in_level = goals & literals # the intersection of goals and predicates in the level
-                level_sum += len(goals_in_level) * level # each goals costs "level" points
+                goals_in_level = goals & literals  # the intersection of goals and predicates in the level
+                level_sum += len(goals_in_level) * level  # each goals costs "level" points
                 goals -= goals_in_level
 
         return level_sum
