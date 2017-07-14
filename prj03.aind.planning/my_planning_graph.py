@@ -2,6 +2,7 @@ from aimacode.planning import Action
 from aimacode.search import Problem
 from aimacode.utils import expr
 from lp_utils import decode_state
+from typing import List
 
 
 class PgNode:
@@ -316,7 +317,10 @@ class PlanningGraph:
             a_node = PgNode_a(action)
             # the node must be reachable in the current level
             s_level_preconditions = self.s_levels[level]
-            if a_node.prenodes < s_level_preconditions:  # subset => reachable
+            # to get the actual predicates in s_level with mutex conditions
+            a_prenodes_in_s = list(s_level_preconditions & a_node.prenodes)
+            # (1) subset => reachable and (2) no conflicts i.e mutex pair of preconditions
+            if a_node.prenodes < s_level_preconditions and not list_in_conflict(a_prenodes_in_s):
                 action_nodes.add(a_node)  # add the node to the set of actions in this level
                 # now we create links in the graph between actions and predicates
                 for precondition_node in s_level_preconditions & a_node.prenodes:  # intersection
@@ -545,3 +549,12 @@ class PlanningGraph:
                 goals -= goals_in_level
 
         return level_sum
+
+
+def list_in_conflict(nodelist: List[PgNode]):
+    # check all pairs to see if they are in mutex
+    for i, n1 in enumerate(nodelist[:-1]):
+        for n2 in nodelist[i + 1:]:
+            if n1.is_mutex(n2):
+                return True
+    return False
