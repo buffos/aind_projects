@@ -275,10 +275,10 @@ class PlanningGraph:
         level = 0
         self.s_levels.append(set())  # S0 set of s_nodes - empty to start
         # for each fluent in the initial state, add the correct literal PgNode_s
-        for literal in self.fs.pos: # for every positive fluent
+        for literal in self.fs.pos:  # for every positive fluent
             self.s_levels[level].add(PgNode_s(literal, True))  # create a positive s_node
-        for literal in self.fs.neg: # for every negative fluent
-            self.s_levels[level].add(PgNode_s(literal, False)) # create a negative s_node
+        for literal in self.fs.neg:  # for every negative fluent
+            self.s_levels[level].add(PgNode_s(literal, False))  # create a negative s_node
         # no mutexes at the first level
 
         # continue to build the graph alternating A, S levels until last two S levels contain the same literals,
@@ -310,7 +310,7 @@ class PlanningGraph:
         #   set iff all prerequisite literals for the action hold in S0.  This can be accomplished by testing
         #   to see if a proposed PgNode_a has pre_nodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
-        assert len(self.a_levels) == level , "The action list already contains level"
+        assert len(self.a_levels) == level, "The action list already contains level"
         action_nodes = set()  # create the set of action for the current level in order to populate it.
         for action in self.all_actions:
             # create a Node for the action
@@ -318,13 +318,12 @@ class PlanningGraph:
             # the node must be reachable in the current level
             s_level_preconditions = self.s_levels[level]
             if a_node.prenodes < s_level_preconditions:  # subset => reachable
-                action_nodes.add(a_node) # add the node to the set of actions in this level
+                action_nodes.add(a_node)  # add the node to the set of actions in this level
                 # now we create links in the graph between actions and predicates
                 for precondition_node in s_level_preconditions & a_node.prenodes:  # intersection
                     precondition_node.chilren.add(a_node)  # connect preconditions with actions
                     a_node.parents.add(precondition_node)  # connect actions with preconditions
         self.a_levels.append(action_nodes)
-
 
     def add_literal_level(self, level):
         """ add an S (literal) level to the Planning Graph
@@ -335,14 +334,22 @@ class PlanningGraph:
         :return:
             adds S nodes to the current level in self.s_levels[level]
         """
-        # TODO add literal S level to the planning graph as described in the Russell-Norvig text
         # 1. determine what literals to add
         # 2. connect the nodes
-        # for example, every A node in the previous level has a list of S nodes in effnodes that represent the effect
-        #   produced by the action.  These literals will all be part of the new S level.  Since we are working with sets, they
-        #   may be "added" to the set without fear of duplication.  However, it is important to then correctly create and connect
-        #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
+        #  for example, every A node in the previous level has a list of S nodes in eff_nodes that represent the effect
+        #   produced by the action.  These literals will all be part of the new S level.
+        #   Since we are working with sets, they  may be "added" to the set without fear of duplication.
+        #   However, it is important to then correctly create and connect all of the new S nodes as children
+        #    of all the A nodes that could produce them, and likewise add the A nodes to the
         #   parent sets of the S nodes
+        s_nodes = set()
+        for a_node in self.a_levels[level - 1]:
+            # add the effects of the action node to the new set of achievable predicates
+            for s_node in a_node.effnodes:
+                s_nodes.add(s_node)  # add the predicate in the new state
+                s_node.parents.add(a_node)  # link it to the action that created it
+                a_node.childre.add(s_node)  # link the action to the resulting predicate
+        self.s_levels.append(s_nodes)
 
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
