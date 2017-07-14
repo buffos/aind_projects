@@ -214,7 +214,6 @@ class PlanningGraph:
             s_levels: list of sets of PgNode_s, where each set in the list represents an S-level in the planning graph
             a_levels: list of sets of PgNode_a, where each set in the list represents an A-level in the planning graph
         """
-        self.problem = problem
         self.fs = decode_state(state, problem.state_map)
         self.serial = serial_planning
         self.all_actions = self.problem.actions_list + self.noop_actions(self.problem.state_map)
@@ -356,7 +355,7 @@ class PlanningGraph:
 
         Mutex action tests section from 3rd Ed. 10.3 or 2nd Ed. 11.4
         A mutex relation holds between two actions a given level
-        if the planning graph is a serial planning graph and the pair are nonpersistence actions
+        if the planning graph is a serial planning graph and the pair are non persistence actions
         or if any of the three conditions hold between the pair:
            Inconsistent Effects
            Interference
@@ -366,7 +365,7 @@ class PlanningGraph:
         :return:
             mutex set in each PgNode_a in the set is appropriately updated
         """
-        nodelist = list(nodeset)
+        nodelist = list(nodeset)  # passing the set of actions as a list
         for i, n1 in enumerate(nodelist[:-1]):
             for n2 in nodelist[i + 1:]:
                 if (self.serialize_actions(n1, n2) or
@@ -386,11 +385,11 @@ class PlanningGraph:
         :param node_a2: PgNode_a
         :return: bool
         """
-        #
-        if not self.serial:
+        # we want to force functions happening in order if self.serial is true
+        if not self.serial:  # if we do parallel planning then the actions are not mutex
             return False
         if node_a1.is_persistent or node_a2.is_persistent:
-            return False
+            return False  # one of the actions is persistent => the predicate has happened in a previous step.
         return True
 
     def inconsistent_effects_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
@@ -407,7 +406,16 @@ class PlanningGraph:
         :param node_a2: PgNode_a
         :return: bool
         """
-        # TODO test for Inconsistent Effects between nodes
+        # node_1 effect(+) are not canceled by node_2 effect(-)
+        for effect_add in node_a1.action.effect_add:
+            if effect_add in node_a2.action.effect_rem:
+                return True
+
+        # the same for node_2
+        for effect_add in node_a2.action.effect_add:
+            if effect_add in node_a1.action.effect_rem:
+                return True
+
         return False
 
     def interference_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
@@ -424,7 +432,24 @@ class PlanningGraph:
         :param node_a2: PgNode_a
         :return: bool
         """
-        # TODO test for Interference between nodes
+        # node_a1 effects(+) do not conflict with node_a2 preconditions (-)
+        # node_a2 effects(+) do not conflict with node_a1 preconditions (-)
+        for effect in node_a1.action.effect_add:
+            if effect in node_a2.action.precond_neg:
+                return True
+        for effect in node_a2.action.effect_add:
+            if effect in node_a1.action.precond_neg:
+                return True
+
+        # node_a1 effects(-) do not conflict with node_a2 preconditions (+)
+        # node_a2 effects(-) do not conflict with node_a1 preconditions (+)
+        for effect in node_a1.action.effect_rem:
+            if effect in node_a2.action.precond_pos:
+                return True
+        for effect in node_a2.action.effect_rem:
+            if effect in node_a1.action.precond_pos:
+                return True
+
         return False
 
     def competing_needs_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
@@ -438,7 +463,12 @@ class PlanningGraph:
         :return: bool
         """
 
-        # TODO test for Competing Needs between nodes
+        # nodes do not have mutually exclusive preconditions
+        # precondition_a1 and a2 are Nodes and we check if the one includes the other in their mutex list.
+        for precondition_a1 in node_a1.parents:
+            for precondition_a2 in node_a2.parents:
+                if precondition_a1.is_mutex(precondition_a2):
+                    return True
         return False
 
     def update_s_mutex(self, nodeset: set):
